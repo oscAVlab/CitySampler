@@ -2,70 +2,78 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>city sampler</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
+    color-scheme: dark;
     --bg: #0a0a0a; --surface: #111; --border: #222; --border-hi: #333;
     --text: #bbb; --text-dim: #444; --text-hi: #eee;
     --green: #4dffb4; --green-dim: rgba(77,255,180,0.08);
-    --red: #ff5555; --amber: #f5a623;
+    --red: #ff5555; --amber: #f5a623; --blue: #59a6ff;
     --mono: 'Share Tech Mono', monospace;
     --cond: 'Barlow Condensed', sans-serif;
   }
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;500&display=swap');
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 12px; }
-  body { display: flex; flex-direction: column; padding: 20px 24px; gap: 0; min-height: 100vh; }
+  body { display: flex; flex-direction: column; padding: 20px 16px; gap: 0; min-height: 100%; max-width: 640px; margin: 0 auto; }
 
   h1 { font-family: var(--cond); font-size: 20px; font-weight: 300; letter-spacing: .25em; text-transform: uppercase; color: var(--text-hi); }
-  .header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; }
   .city-now { font-size: 11px; color: var(--text-dim); letter-spacing: .08em; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .status { font-size: 10px; letter-spacing: .05em; margin-bottom: 14px; min-height: 13px; color: var(--text-dim); }
+  .status { font-size: 10px; letter-spacing: .05em; margin-bottom: 14px; min-height: 13px; color: var(--text-dim); word-break: break-word; }
   .status.ok  { color: var(--green); }
   .status.err { color: var(--red); }
   .status.wrn { color: var(--amber); }
 
   .search-row { display: flex; gap: 6px; margin-bottom: 8px; }
-  input[type=text] { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text-hi); font-family: var(--mono); font-size: 13px; padding: 7px 10px; outline: none; }
+  input[type=text] { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); color: var(--text-hi); font-family: var(--mono); font-size: 13px; padding: 7px 10px; outline: none; }
   input[type=text]:focus { border-color: var(--border-hi); }
   input[type=text]::placeholder { color: var(--text-dim); }
 
-  .station-list { margin-bottom: 14px; display: none; flex-direction: column; gap: 2px; max-height: 130px; overflow-y: auto; }
+  .station-list { margin-bottom: 14px; display: none; flex-direction: column; gap: 2px; max-height: 150px; overflow-y: auto; }
   .station-list.visible { display: flex; }
   .station-item { background: var(--surface); border: 1px solid var(--border); padding: 5px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; transition: border-color .1s; }
   .station-item:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .station-item.playing { border-color: var(--green); color: var(--green); }
+  .station-item.skipped { opacity: .4; }
   .sname { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
   .stag  { font-size: 9px; color: var(--text-dim); flex-shrink: 0; }
 
   button { background: transparent; border: 1px solid var(--border-hi); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 7px 13px; cursor: pointer; letter-spacing: .04em; transition: all .1s; white-space: nowrap; }
   button:hover { background: var(--surface); color: var(--text-hi); border-color: #444; }
   button:active { transform: scale(.98); }
+  button:focus-visible { outline: 1px solid var(--green); outline-offset: 1px; }
   button.lit { border-color: var(--green); color: var(--green); }
+  button.lit-amber { border-color: var(--amber); color: var(--amber); }
 
-  .clock-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 10px; border: 1px solid var(--border); background: var(--surface); }
+  .clock-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 10px; border: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background .04s; }
   .dot.beat { background: var(--green); }
-  .bpm-group { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .bpm-group { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 140px; }
   .lbl { font-size: 10px; color: var(--text-dim); letter-spacing: .08em; flex-shrink: 0; }
 
   input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; flex: 1; min-width: 50px; }
   input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--border-hi); border-radius: 1px; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; background: #555; border-radius: 50%; margin-top: -4.5px; }
+  input[type=range]::-moz-range-track { height: 2px; background: var(--border-hi); border-radius: 1px; }
+  input[type=range]::-moz-range-thumb { width: 11px; height: 11px; background: #555; border: none; border-radius: 50%; }
   input[type=range]:hover::-webkit-slider-thumb { background: var(--green); }
-  .val { font-size: 11px; color: var(--text-hi); min-width: 32px; text-align: right; flex-shrink: 0; }
+  input[type=range]:hover::-moz-range-thumb { background: var(--green); }
+  .val { font-size: 11px; color: var(--text-hi); min-width: 34px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
-  .sec-title { font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .sec-title { font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec-title button { padding: 3px 9px; font-size: 9px; letter-spacing: .1em; }
   .sdiv-wrap { margin-bottom: 14px; }
   .sdiv-grid { display: flex; gap: 4px; flex-wrap: wrap; }
-  .sdiv { font-family: var(--mono); font-size: 10px; padding: 4px 7px; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; }
+  .sdiv { font-family: var(--mono); font-size: 10px; padding: 4px 7px; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; background: transparent; }
   .sdiv:hover { color: var(--text); border-color: var(--border-hi); }
   .sdiv.sel { border-color: var(--green); color: var(--green); background: var(--green-dim); }
 
   .layers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .layer { border: 1px solid var(--border); background: var(--surface); padding: 10px 12px; }
+  .layer { border: 1px solid var(--border); background: var(--surface); padding: 10px 12px; min-width: 0; }
   .layer-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .layer-id { font-family: var(--cond); font-size: 18px; font-weight: 300; letter-spacing: .1em; color: var(--text-hi); }
   .layer-type { font-size: 9px; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; }
@@ -74,11 +82,16 @@
   .plbl { font-size: 10px; color: var(--text-dim); min-width: 48px; }
   .meter { height: 2px; background: var(--border); margin-top: 8px; overflow: hidden; }
   .mfill { height: 100%; width: 0%; background: var(--green); }
+  .mfill.amber { background: var(--amber); }
 
-  .grain-sec { border: 1px solid var(--border); background: var(--surface); padding: 10px 12px; margin-bottom: 14px; }
+  .card-sec { border: 1px solid var(--border); background: var(--surface); padding: 10px 12px; margin-bottom: 14px; }
 
   .foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text-dim); letter-spacing: .04em; line-height: 1.9; }
   audio { display: none; }
+
+  @media (max-width: 420px) {
+    .layers { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -107,11 +120,11 @@
     <input type="range" id="bpmR" min="40" max="240" value="120" step="1" oninput="setBPM(+this.value)"/>
     <span class="val" id="bpmV">120</span>
   </div>
-  <span style="font-size:10px;color:var(--text-dim)">MIDI auto</span>
+  <span style="font-size:10px;color:var(--text-dim)" id="midiTag">MIDI auto</span>
 </div>
 
 <div class="sdiv-wrap">
-  <div class="sec-title">subdivisión</div>
+  <div class="sec-title"><span>subdivisión (capas A/B)</span></div>
   <div class="sdiv-grid" id="sdivGrid"></div>
 </div>
 
@@ -146,8 +159,8 @@
   </div>
 </div>
 
-<div class="grain-sec">
-  <div class="sec-title">granular</div>
+<div class="card-sec">
+  <div class="sec-title"><span>granular</span></div>
   <div class="param">
     <span class="plbl">grain</span>
     <input type="range" id="gsz" min="20" max="800" step="10" value="150" oninput="document.getElementById('gszV').textContent=this.value+'ms'"/>
@@ -165,8 +178,43 @@
   </div>
 </div>
 
+<div class="card-sec">
+  <div class="sec-title">
+    <span>C · bombo (negras)</span>
+    <button id="bomboToggle" class="lit" onclick="toggleBombo()">on</button>
+  </div>
+  <div class="param">
+    <span class="plbl">nivel</span>
+    <input type="range" id="bLevel" min="0" max="1" step="0.01" value="0.9" oninput="setBomboParam('level',+this.value)"/>
+    <span class="val" id="bLevelV">90%</span>
+  </div>
+  <div class="param">
+    <span class="plbl">tono</span>
+    <input type="range" id="bTone" min="30" max="150" step="1" value="55" oninput="setBomboParam('tone',+this.value)"/>
+    <span class="val" id="bToneV">55Hz</span>
+  </div>
+  <div class="param">
+    <span class="plbl">decay</span>
+    <input type="range" id="bDecay" min="80" max="600" step="10" value="220" oninput="setBomboParam('decay',+this.value)"/>
+    <span class="val" id="bDecayV">220ms</span>
+  </div>
+  <div class="param">
+    <span class="plbl">punch</span>
+    <input type="range" id="bPunch" min="0" max="1" step="0.01" value="0.4" oninput="setBomboParam('punch',+this.value)"/>
+    <span class="val" id="bPunchV">40%</span>
+  </div>
+  <div class="param" style="margin-bottom:0">
+    <span class="plbl">drive</span>
+    <input type="range" id="bDrive" min="0" max="1" step="0.01" value="0.2" oninput="setBomboParam('drive',+this.value)"/>
+    <span class="val" id="bDriveV">20%</span>
+  </div>
+  <div class="meter"><div class="mfill amber" id="mC"></div></div>
+</div>
+
 <div class="foot">
-  Buffer: ~10s acumulado · MIDI clock: detecta automáticamente · A y B comparten fuente, salidas independientes
+  Buffer: ~10s acumulado · captura de la emisora conectada una sola vez (evita fallos al cambiar de estación) ·
+  si un stream no entrega audio capturable (CORS) se salta a la siguiente automáticamente ·
+  bombo suena en negras y suma con A/B · MIDI clock: detecta automáticamente
 </div>
 
 <script>
@@ -207,10 +255,13 @@ const CC={
   toronto:'CA',montreal:'CA',vancouver:'CA',
 };
 
-let selSd=3, bpm=120, clockOn=false, clockTmr=null;
-let ctx, gA, gB, anA, anB, buf=[], SR=44100, proc=null, srcNode=null;
-let midiTicks=0, midiActive=false;
-let stations=[], currentStation=-1;
+const MIRRORS=['de1.api.radio-browser.info','de2.api.radio-browser.info','nl1.api.radio-browser.info','at1.api.radio-browser.info','fi1.api.radio-browser.info'];
+
+let selSd=3, bpm=120, clockOn=false, clockTmr=null, bomboTmr=null;
+let ctx, gA, gB, gC, shaperC, anA, anB, anC, buf=[], SR=44100, proc=null, srcNode=null, captureReady=false;
+let midiTicks=0, midiQTicks=0, midiActive=false;
+let stations=[], currentStation=-1, currentStationName='';
+let bombo={enabled:true, level:0.9, tone:55, decay:220, punch:0.4, drive:0.2};
 
 /* grid */
 function buildGrid(){
@@ -225,6 +276,7 @@ function buildGrid(){
 }
 
 function sdivMs(){ return (60000/bpm)*SDIVS[selSd].b; }
+function quarterMs(){ return 60000/bpm; }
 function setBPM(v){ bpm=v; document.getElementById('bpmV').textContent=v; }
 
 /* clock */
@@ -234,11 +286,15 @@ function toggleClock(){
   const btn=document.getElementById('startBtn');
   btn.textContent=clockOn?'stop':'start';
   btn.classList.toggle('lit',clockOn);
-  if(clockOn) sched(); else { clearTimeout(clockTmr); clockTmr=null; }
+  if(clockOn){ sched(); bomboSched(); }
+  else { clearTimeout(clockTmr); clockTmr=null; clearTimeout(bomboTmr); bomboTmr=null; }
 }
 function sched(){ if(!clockOn||midiActive) return; tick(); clockTmr=setTimeout(sched,sdivMs()); }
 function tick(){ flash(); if(buf.length>SR*0.4){ trigA(); trigB(); } }
 function flash(){ const d=document.getElementById('dot'); d.classList.add('beat'); setTimeout(()=>d.classList.remove('beat'),80); }
+
+function bomboSched(){ if(!clockOn||midiActive) return; bomboBeat(); bomboTmr=setTimeout(bomboSched,quarterMs()); }
+function bomboBeat(){ if(bombo.enabled && ctx) trigBombo(ctx.currentTime); }
 
 /* audio */
 function initAudio(){
@@ -246,11 +302,24 @@ function initAudio(){
   SR=ctx.sampleRate;
   gA=ctx.createGain(); gA.gain.value=0.8;
   gB=ctx.createGain(); gB.gain.value=0.65;
+  gC=ctx.createGain(); gC.gain.value=bombo.level;
+  shaperC=ctx.createWaveShaper(); shaperC.curve=driveCurve(bombo.drive); shaperC.oversample='2x';
   anA=ctx.createAnalyser(); anA.fftSize=256;
   anB=ctx.createAnalyser(); anB.fftSize=256;
+  anC=ctx.createAnalyser(); anC.fftSize=256;
   gA.connect(anA); anA.connect(ctx.destination);
   gB.connect(anB); anB.connect(ctx.destination);
+  gC.connect(shaperC); shaperC.connect(anC); anC.connect(ctx.destination);
   meters(); setupMIDI();
+}
+
+function driveCurve(amount){
+  const n=1024, curve=new Float32Array(n), k=amount*18;
+  for(let i=0;i<n;i++){
+    const x=i*2/n-1;
+    curve[i]=(1+k)*x/(1+k*Math.abs(x));
+  }
+  return curve;
 }
 
 function setGain(layer,v){
@@ -259,56 +328,122 @@ function setGain(layer,v){
   else           { if(gB) gB.gain.value=v; document.getElementById('volBv').textContent=pct; }
 }
 
-/* search */
+/* bombo controls */
+function toggleBombo(){
+  bombo.enabled=!bombo.enabled;
+  const btn=document.getElementById('bomboToggle');
+  btn.textContent=bombo.enabled?'on':'off';
+  btn.classList.toggle('lit',bombo.enabled);
+}
+function setBomboParam(key,v){
+  bombo[key]=v;
+  if(key==='level'){ if(gC) gC.gain.value=v; document.getElementById('bLevelV').textContent=Math.round(v*100)+'%'; }
+  if(key==='tone'){ document.getElementById('bToneV').textContent=v+'Hz'; }
+  if(key==='decay'){ document.getElementById('bDecayV').textContent=v+'ms'; }
+  if(key==='punch'){ document.getElementById('bPunchV').textContent=Math.round(v*100)+'%'; }
+  if(key==='drive'){ document.getElementById('bDriveV').textContent=Math.round(v*100)+'%'; if(shaperC) shaperC.curve=driveCurve(v); }
+}
+
+function trigBombo(when){
+  if(!ctx) return;
+  const t=bombo.tone, dec=bombo.decay/1000, punch=bombo.punch;
+  // cuerpo: seno con caída de tono
+  const osc=ctx.createOscillator(); osc.type='sine';
+  osc.frequency.setValueAtTime(t*(2.2+punch*2.5), when);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(20,t), when+0.045+punch*0.02);
+  const env=ctx.createGain();
+  env.gain.setValueAtTime(0.0001, when);
+  env.gain.exponentialRampToValueAtTime(1, when+0.003);
+  env.gain.exponentialRampToValueAtTime(0.0001, when+dec);
+  osc.connect(env); env.connect(gC);
+  osc.start(when); osc.stop(when+dec+0.05);
+
+  // click de ataque (proporcional a punch)
+  if(punch>0.02){
+    const clickLen=0.012;
+    const nb=ctx.createBuffer(1,Math.floor(SR*clickLen),SR);
+    const d=nb.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+    const cs=ctx.createBufferSource(); cs.buffer=nb;
+    const cg=ctx.createGain(); cg.gain.value=punch*0.7;
+    cs.connect(cg); cg.connect(gC);
+    cs.start(when); cs.stop(when+clickLen+0.01);
+  }
+}
+
+/* búsqueda de emisoras — robusta a mirrors caídos y streams sin CORS */
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+async function fetchJSON(url,timeoutMs){
+  const ctrl=new AbortController();
+  const tm=setTimeout(()=>ctrl.abort(),timeoutMs||6000);
+  try{
+    const r=await fetch(url,{signal:ctrl.signal, headers:{'User-Agent':'CitySampler/1.0'}});
+    clearTimeout(tm);
+    if(!r.ok) return null;
+    const d=await r.json();
+    return Array.isArray(d)?d:null;
+  }catch(e){ clearTimeout(tm); return null; }
+}
+
+async function resolveMirrors(){
+  const d=await fetchJSON('https://all.api.radio-browser.info/json/servers',4000);
+  if(d && d.length){
+    const names=d.map(s=>s.name).filter(Boolean);
+    if(names.length) return shuffle(names);
+  }
+  return shuffle(MIRRORS.slice());
+}
+
+function isUsable(s){
+  return s.url_resolved &&
+    s.url_resolved.startsWith('http') &&
+    !s.url_resolved.includes('.m3u8') &&
+    (s.codec==='MP3'||s.codec==='AAC'||s.codec==='OGG'||s.codec===''||!s.codec);
+}
+function dedupe(list){
+  const seen=new Set(), out=[];
+  for(const s of list){
+    const key=s.url_resolved||s.name;
+    if(seen.has(key)) continue;
+    seen.add(key); out.push(s);
+  }
+  return out;
+}
+
 async function doSearch(){
   const raw=document.getElementById('cityInput').value.trim();
   if(!raw) return;
   if(!ctx) initAudio();
-  setStatus('buscando: '+raw+'...','');
   buf=[]; stations=[]; currentStation=-1;
   const list=document.getElementById('stationList');
   list.classList.remove('visible'); list.innerHTML='';
 
+  setStatus('resolviendo servidores...','');
+  const mirrors=await resolveMirrors();
   const city=raw.toLowerCase();
   const cc=CC[city]||null;
+
+  const attempts=[];
+  mirrors.forEach(m=>attempts.push({label:'nombre', url:`https://${m}/json/stations/search?name=${encodeURIComponent(raw)}&limit=30&hidebroken=true&order=votes&reverse=true`}));
+  mirrors.forEach(m=>attempts.push({label:'región', url:`https://${m}/json/stations/search?state=${encodeURIComponent(raw)}&limit=30&hidebroken=true&order=votes&reverse=true`}));
+  if(cc) mirrors.forEach(m=>attempts.push({label:'país', url:`https://${m}/json/stations/search?countrycode=${cc}&limit=60&hidebroken=true&order=votes&reverse=true`}));
+  mirrors.forEach(m=>attempts.push({label:'top global', url:`https://${m}/json/stations/topvote/40`}));
+
   let found=[];
-
-  // intentos en orden de especificidad
-  const queries=[
-    // por nombre de estación
-    `https://de1.api.radio-browser.info/json/stations/search?name=${encodeURIComponent(raw)}&limit=30&hidebroken=true&order=votes&reverse=true`,
-    // por state/región
-    `https://de1.api.radio-browser.info/json/stations/search?state=${encodeURIComponent(raw)}&limit=30&hidebroken=true&order=votes&reverse=true`,
-  ];
-  if(cc){
-    // por país — las más votadas
-    queries.push(`https://de1.api.radio-browser.info/json/stations/search?countrycode=${cc}&limit=60&hidebroken=true&order=votes&reverse=true`);
-  }
-  // fallback global top
-  queries.push(`https://de1.api.radio-browser.info/json/stations/topvote/30`);
-
-  for(const url of queries){
-    try{
-      const r=await fetch(url,{headers:{'User-Agent':'CitySampler/1.0'}});
-      if(!r.ok) continue;
-      const data=await r.json();
-      if(!Array.isArray(data)||!data.length) continue;
-      // filtrar streams usables: necesitan url_resolved, no HLS
-      const clean=data.filter(s=>
-        s.url_resolved &&
-        s.url_resolved.startsWith('http') &&
-        !s.url_resolved.includes('.m3u8') &&
-        (s.codec==='MP3'||s.codec==='AAC'||s.codec===''||!s.codec)
-      );
-      if(clean.length){ found=clean.slice(0,8); break; }
-    } catch(e){ console.warn('fetch error',e); }
+  for(const a of attempts){
+    setStatus('buscando ('+a.label+')...','');
+    const data=await fetchJSON(a.url,6000);
+    if(!data || !data.length) continue;
+    const clean=dedupe(data.filter(isUsable));
+    if(clean.length){ found=clean.slice(0,10); break; }
   }
 
-  if(!found.length){ setStatus('sin resultados. verifica tu conexión.','err'); return; }
+  if(!found.length){ setStatus('sin resultados en ningún servidor — revisa tu conexión','err'); return; }
 
   stations=found;
   renderList();
-  playStation(0);
+  playStation(0,true);
 }
 
 function renderList(){
@@ -317,46 +452,56 @@ function renderList(){
   stations.forEach((s,i)=>{
     const d=document.createElement('div');
     d.className='station-item'+(i===currentStation?' playing':'');
+    d.dataset.idx=i;
     d.innerHTML=`<span class="sname">${s.name}</span><span class="stag">${s.codec||''} ${s.bitrate?s.bitrate+'k':''}</span>`;
-    d.onclick=()=>playStation(i);
+    d.onclick=()=>playStation(i,false);
     list.appendChild(d);
   });
   list.classList.add('visible');
 }
 
-function playStation(idx){
+function playStation(idx, allowSkip){
   if(!stations[idx]) return;
   currentStation=idx;
   document.querySelectorAll('.station-item').forEach((el,i)=>el.classList.toggle('playing',i===idx));
   buf=[];
   const s=stations[idx];
+  currentStationName=s.name;
   const url=s.url_resolved||s.url;
   setStatus('conectando: '+s.name+'...','');
   document.getElementById('cityNow').textContent=s.name;
 
-  const aud=document.getElementById('aud');
-  if(srcNode){ try{ srcNode.disconnect(); }catch(e){} srcNode=null; }
-  if(proc){ try{ proc.disconnect(); }catch(e){} proc=null; }
-
   if(ctx && ctx.state==='suspended') ctx.resume();
 
+  const aud=document.getElementById('aud');
   aud.src=url; aud.load();
+
+  const skipToNext=(msg)=>{
+    setStatus(msg,'wrn');
+    const el=document.querySelector(`.station-item[data-idx="${idx}"]`);
+    if(el) el.classList.add('skipped');
+    if(allowSkip!==false && idx+1<stations.length){
+      setTimeout(()=>playStation(idx+1,true),300);
+    } else {
+      setStatus('ninguna emisora de la lista respondió — prueba otra ciudad','err');
+    }
+  };
 
   aud.oncanplay=()=>{
     const p=aud.play();
     if(p){
-      p.then(()=>hookAudio(aud,s.name)).catch(()=>{
-        setStatus('click ▶ para iniciar (politica del navegador)','wrn');
-        showPlayBtn(aud, s.name);
+      p.then(()=>hookAudio(aud,s.name,idx,allowSkip)).catch(()=>{
+        setStatus('click ▶ para iniciar (política del navegador)','wrn');
+        showPlayBtn(aud,s.name,idx,allowSkip);
       });
     } else {
-      hookAudio(aud,s.name);
+      hookAudio(aud,s.name,idx,allowSkip);
     }
   };
-  aud.onerror=()=>setStatus('stream roto — prueba otra','err');
+  aud.onerror=()=>skipToNext('stream roto: '+s.name+' — probando siguiente');
 }
 
-function showPlayBtn(aud, name){
+function showPlayBtn(aud,name,idx,allowSkip){
   const existing=document.getElementById('manualPlayBtn');
   if(existing) existing.remove();
   const btn=document.createElement('button');
@@ -365,28 +510,59 @@ function showPlayBtn(aud, name){
   btn.style.cssText='margin-bottom:10px;border-color:#f5a623;color:#f5a623;';
   btn.onclick=()=>{
     if(ctx && ctx.state==='suspended') ctx.resume();
-    aud.play().then(()=>{ hookAudio(aud,name); btn.remove(); })
-      .catch(()=>setStatus('no se pudo iniciar — prueba otra estacion','err'));
+    aud.play().then(()=>{ hookAudio(aud,name,idx,allowSkip); btn.remove(); })
+      .catch(()=>setStatus('no se pudo iniciar — prueba otra estación','err'));
   };
-  document.getElementById('stationList').insertAdjacentElement('afterend', btn);
+  document.getElementById('stationList').insertAdjacentElement('afterend',btn);
 }
 
-function hookAudio(aud,name){
-  if(ctx.state==='suspended') ctx.resume();
+/* la captura del elemento <audio> se crea UNA sola vez: crear un
+   MediaElementSource dos veces sobre el mismo <audio> lanza un error
+   nativo y deja de capturar tras cambiar de emisora — por eso "las
+   fuentes no siempre conectan igual". Ahora solo se cambia aud.src. */
+function ensureCapture(){
+  if(captureReady) return;
+  const aud=document.getElementById('aud');
   srcNode=ctx.createMediaElementSource(aud);
-
   proc=ctx.createScriptProcessor(4096,2,1);
   srcNode.connect(proc);
   const sink=ctx.createGain(); sink.gain.value=0;
   proc.connect(sink); sink.connect(ctx.destination);
-
   proc.onaudioprocess=e=>{
     const ch=e.inputBuffer.getChannelData(0);
     buf.push(...ch);
     if(buf.length>SR*10) buf=buf.slice(buf.length-SR*10);
   };
+  captureReady=true;
+}
 
+function hookAudio(aud,name,idx,allowSkip){
+  if(ctx.state==='suspended') ctx.resume();
+  ensureCapture();
   setStatus('▶ '+name,'ok');
+  checkCaptureHealth(name,idx,allowSkip);
+}
+
+/* algunos streams no envían cabeceras CORS: el audio suena pero el
+   buffer capturado llega en silencio y las capas A/B no tendrán
+   material — se detecta y se salta a la siguiente emisora sola */
+function checkCaptureHealth(name,idx,allowSkip){
+  setTimeout(()=>{
+    if(currentStationName!==name) return;
+    let peak=0;
+    const from=Math.max(0,buf.length-SR);
+    for(let i=from;i<buf.length;i++){ const a=Math.abs(buf[i]); if(a>peak) peak=a; }
+    if(peak<0.0008){
+      const el=document.querySelector(`.station-item[data-idx="${idx}"]`);
+      if(el) el.classList.add('skipped');
+      if(allowSkip!==false && idx+1<stations.length){
+        setStatus('sin audio capturable (CORS): '+name+' — probando siguiente','wrn');
+        setTimeout(()=>playStation(idx+1,true),300);
+      } else {
+        setStatus('emisora sin audio capturable (CORS) — el bombo sigue sonando','wrn');
+      }
+    }
+  },1800);
 }
 
 /* layer A */
@@ -447,33 +623,40 @@ function trigB(){
 function meters(){
   const dA=new Uint8Array(anA.frequencyBinCount);
   const dB=new Uint8Array(anB.frequencyBinCount);
+  const dC=new Uint8Array(anC.frequencyBinCount);
   (function f(){
     anA.getByteTimeDomainData(dA);
     anB.getByteTimeDomainData(dB);
-    let rA=0,rB=0;
-    for(let i=0;i<dA.length;i++){ rA+=(dA[i]/128-1)**2; rB+=(dB[i]/128-1)**2; }
+    anC.getByteTimeDomainData(dC);
+    let rA=0,rB=0,rC=0;
+    for(let i=0;i<dA.length;i++){ rA+=(dA[i]/128-1)**2; rB+=(dB[i]/128-1)**2; rC+=(dC[i]/128-1)**2; }
     document.getElementById('mA').style.width=Math.min(100,Math.sqrt(rA/dA.length)*600)+'%';
     document.getElementById('mB').style.width=Math.min(100,Math.sqrt(rB/dB.length)*600)+'%';
+    document.getElementById('mC').style.width=Math.min(100,Math.sqrt(rC/dC.length)*600)+'%';
     requestAnimationFrame(f);
   })();
 }
 
 /* MIDI */
 async function setupMIDI(){
-  if(!navigator.requestMIDIAccess) return;
+  if(!navigator.requestMIDIAccess){ document.getElementById('midiTag').textContent='MIDI no disponible'; return; }
   try{
     const ma=await navigator.requestMIDIAccess({sysex:false});
     const attach=inp=>{
       inp.onmidimessage=e=>{
         if(e.data[0]===0xF8){
-          midiTicks++;
+          midiTicks++; midiQTicks++;
           if(midiTicks>=Math.round(24*SDIVS[selSd].b)){
             midiTicks=0; midiActive=true;
             if(!clockOn){ clockOn=true; document.getElementById('startBtn').textContent='stop'; document.getElementById('startBtn').classList.add('lit'); }
             tick();
           }
+          if(midiQTicks>=24){
+            midiQTicks=0;
+            if(bombo.enabled && ctx) trigBombo(ctx.currentTime);
+          }
         }
-        if(e.data[0]===0xFA) midiTicks=0;
+        if(e.data[0]===0xFA){ midiTicks=0; midiQTicks=0; }
         if(e.data[0]===0xFC){ midiActive=false; clockOn=false; document.getElementById('startBtn').textContent='start'; document.getElementById('startBtn').classList.remove('lit'); }
       };
     };
