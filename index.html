@@ -492,6 +492,11 @@ function playStation(idx, allowSkip){
   if(ctx && ctx.state==='suspended') ctx.resume();
 
   const aud=document.getElementById('aud');
+  // el elemento SIEMPRE va silenciado en la salida directa: el audio real
+  // pasa por el grafo de Web Audio (gA/gB/gC) para que los on/off y niveles
+  // manden. Sin esto, en algunos entornos la radio se oye "en crudo" y
+  // ningún control tiene efecto sobre ella.
+  aud.muted=true; aud.volume=0;
   aud.src=url; aud.load();
 
   const skipToNext=(msg)=>{
@@ -539,9 +544,14 @@ function showPlayBtn(aud,name,idx,allowSkip){
    nativo y deja de capturar tras cambiar de emisora — por eso "las
    fuentes no siempre conectan igual". Ahora solo se cambia aud.src. */
 function ensureCapture(){
-  if(captureReady) return;
+  if(captureReady) return true;
   const aud=document.getElementById('aud');
-  srcNode=ctx.createMediaElementSource(aud);
+  try{
+    srcNode=ctx.createMediaElementSource(aud);
+  }catch(e){
+    console.warn('createMediaElementSource falló',e);
+    return false;
+  }
   proc=ctx.createScriptProcessor(4096,2,1);
   srcNode.connect(proc);
   const sink=ctx.createGain(); sink.gain.value=0;
@@ -552,11 +562,17 @@ function ensureCapture(){
     if(buf.length>SR*10) buf=buf.slice(buf.length-SR*10);
   };
   captureReady=true;
+  return true;
 }
 
 function hookAudio(aud,name,idx,allowSkip){
   if(ctx.state==='suspended') ctx.resume();
-  ensureCapture();
+  aud.muted=true; aud.volume=0;
+  const ok=ensureCapture();
+  if(!ok){
+    setStatus('no se pudo enganchar la captura de audio — recarga la página','err');
+    return;
+  }
   setStatus('▶ '+name,'ok');
   checkCaptureHealth(name,idx,allowSkip);
 }
